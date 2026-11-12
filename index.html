@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도토리묵밥의 무술도장 🥋</title>
+    <!-- 동양적/무술 도장 느낌을 내는 폰트 로드 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&family=Gowun+Batang:wght@400;700&family=Nanum+Brush+Script&display=swap" rel="stylesheet">
+    <!-- Confetti 축하 효과 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #F4EAD4; /* 한지/도장 느낌의 아이보리 background */
+            --dojo-wood: #4A2E17; /* 도장 목재 색상 */
+            --dojo-dark: #2B1810;
+            --accent-red: #C0392B; /* 붉은 인장/띠 색상 */
+            --gold-yellow: #D4AC0D;
+            --paper-card: #FAF4E8;
+            --text-color: #2C221E;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Gowun Batang', serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            /* 한지 텍스처 및 무협 도장 느낌 배경 */
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(74, 46, 23, 0.05) 0%, transparent 60%),
+                linear-gradient(to right, rgba(74, 46, 23, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(74, 46, 23, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
+            padding: 20px 15px 50px 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 무술도장 현판/헤더 */
+        header {
+            text-align: center;
+            background: var(--paper-card);
+            padding: 25px 20px;
+            border-radius: 12px;
+            border: 4px solid var(--dojo-wood);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), inset 0 0 0 2px var(--gold-yellow);
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        header::before, header::after {
+            content: '🥋';
+            position: absolute;
+            top: 15px;
+            font-size: 1.3rem;
+        }
+        header::before { left: 15px; }
+        header::after { right: 15px; }
+
+        .dojo-badge {
+            display: inline-block;
+            background-color: var(--accent-red);
+            color: #FFF;
+            padding: 4px 14px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            font-family: 'East Sea Dokdo', cursive;
+            font-size: 3rem;
+            color: var(--dojo-dark);
+            margin-bottom: 4px;
+            letter-spacing: 2px;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #6E472A;
+            font-weight: bold;
+        }
+
+        /* 섹션 공통 프레임 */
+        section {
+            background: var(--paper-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 3px solid var(--dojo-wood);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        .section-title {
+            font-family: 'Nanum Brush Script', cursive;
+            font-size: 2.2rem;
+            color: var(--accent-red);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px dashed #D7C4A5;
+            padding-bottom: 6px;
+        }
+
+        /* 카드 뒤집기 (좋아하는 것 3가지: 비급서 컨셉) */
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .flip-card {
+            background-color: transparent;
+            height: 115px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: 10px;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 15px;
+            border: 2px solid var(--dojo-wood);
+        }
+
+        /* 카드 앞면 */
+        .flip-card-front {
+            background: #EFE3C8;
+            color: var(--dojo-dark);
+            gap: 15px;
+        }
+
+        .card-icon {
+            font-size: 2.2rem;
+            background: #FAF4E8;
+            width: 58px;
+            height: 58px;
+            border-radius: 8px;
+            border: 2px solid var(--dojo-wood);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .card-front-text {
+            text-align: left;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: var(--accent-red);
+        }
+
+        .card-hint {
+            font-size: 0.8rem;
+            color: #7A5C43;
+            margin-top: 4px;
+        }
+
+        /* 카드 뒷면 */
+        .flip-card-back {
+            background: #4A2E17;
+            color: #FFF;
+            transform: rotateY(180deg);
+            justify-content: center;
+            align-items: center;
+            font-size: 0.92rem;
+            line-height: 1.45;
+            word-break: keep-all;
+            text-align: center;
+            padding: 15px;
+            border: 2px solid var(--accent-red);
+        }
+
+        /* OX 퀴즈 */
+        .quiz-box {
+            text-align: center;
+            background: #EFE3C8;
+            padding: 20px 15px;
+            border-radius: 10px;
+            border: 2px solid var(--dojo-wood);
+        }
+
+        .quiz-question {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--dojo-dark);
+        }
+
+        .quiz-btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .quiz-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 3px solid var(--dojo-wood);
+            font-size: 2rem;
+            font-weight: bold;
+            font-family: 'East Sea Dokdo', cursive;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .btn-o {
+            background-color: #27AE60;
+            color: #FFF;
+        }
+
+        .btn-x {
+            background-color: var(--accent-red);
+            color: #FFF;
+        }
+
+        .quiz-btn:active {
+            transform: scale(0.92);
+        }
+
+        .quiz-result {
+            margin-top: 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            min-height: 24px;
+        }
+
+        /* 오늘의 무술 운세 */
+        .fortune-box {
+            text-align: center;
+        }
+
+        .fortune-display {
+            min-height: 85px;
+            background: #EFE3C8;
+            border-radius: 10px;
+            border: 2px solid var(--dojo-wood);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            color: var(--dojo-dark);
+            font-weight: bold;
+            line-height: 1.45;
+            word-break: keep-all;
+        }
+
+        .custom-btn {
+            background: var(--dojo-wood);
+            color: #FFF;
+            border: 2px solid var(--dojo-dark);
+            padding: 12px 25px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 0px var(--dojo-dark);
+            transition: all 0.1s ease;
+            font-family: 'Gowun Batang', serif;
+            width: 100%;
+            max-width: 250px;
+        }
+
+        .custom-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0px var(--dojo-dark);
+        }
+
+        /* 10초 무술 미니게임 */
+        .game-box {
+            text-align: center;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            background: #EFE3C8;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--dojo-wood);
+        }
+
+        .stat-item {
+            font-size: 0.95rem;
+            color: var(--dojo-dark);
+        }
+
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: var(--accent-red);
+        }
+
+        .click-target {
+            width: 110px;
+            height: 110px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            margin: 0 auto 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            cursor: pointer;
+            box-shadow: 0 6px 0px #800000, 0 10px 15px rgba(0,0,0,0.2);
+            transition: transform 0.05s ease;
+            border: 4px solid var(--dojo-dark);
+            color: white;
+        }
+
+        .click-target:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px #800000;
+        }
+
+        .click-target.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(60%);
+        }
+
+        .game-msg {
+            font-size: 0.95rem;
+            color: var(--dojo-dark);
+            min-height: 40px;
+            font-weight: bold;
+            line-height: 1.4;
+        }
+
+        /* 오답용 흔들기 애니메이션 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* 정답용 바운스 애니메이션 */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .bounce {
+            animation: bounce 0.4s ease;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #7A5C43;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 도장 현판 / 헤더 -->
+    <header>
+        <span class="dojo-badge">도토리파 무술도장</span>
+        <h1>도토리묵밥 수련원 🥋</h1>
+        <p class="subtitle">"강인한 묵밥만이 세상의 시련을 견뎌낸다!"</p>
+    </header>
+
+    <!-- 좋아하는 것 3가지 (카드 뒤집기) -->
+    <section>
+        <div class="section-title">
+            <span>📜</span> 관장의 3대 절대 비권
+        </div>
+        <p style="font-size: 0.85rem; color: #6E472A; margin-bottom: 12px;">비급서를 터치하여 무술 비결을 알아내라!</p>
+        
+        <div class="cards-container">
+            <!-- 카드 1 -->
+            <div class="flip-card" onclick="toggleCard(this)">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="card-icon">🍓</div>
+                        <div class="card-front-text">
+                            <div class="card-title">딸기 쇼트케이크 권법</div>
+                            <div class="card-hint">터치하여 비급 펼치기 👆</div>
+                        </div>
+                    </div>
+                    <div class="flip-card-back">
+                        [비권] 달콤한 생크림처럼 부드럽게 적을 당황시키고, 상큼한 딸기 펀치로 마무리하는 최강의 디저트 무공! 🍰
+                    </div>
+                </div>
+            </div>
+
+            <!-- 카드 2 -->
+            <div class="flip-card" onclick="toggleCard(this)">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="card-icon">🥣</div>
+                        <div class="card-front-text">
+                            <div class="card-title">도토리묵밥 초식</div>
+                            <div class="card-hint">터치하여 비급 펼치기 👆</div>
+                        </div>
+                    </div>
+                    <div class="flip-card-back">
+                        [본체] 몽글몽글 유연한 몸놀림으로 적의 칼날을 튕겨내고, 시원한 묵밥 육수로 무더위와 스트레스를 단숨에 격파한다! ❄️
+                    </div>
+                </div>
+            </div>
+
+            <!-- 카드 3 -->
+            <div class="flip-card" onclick="toggleCard(this)">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="card-icon">🎧</div>
+                        <div class="card-front-text">
+                            <div class="card-title">음공(음악 듣기) 수련</div>
+                            <div class="card-hint">터치하여 비급 펼치기 👆</div>
+                        </div>
+                    </div>
+                    <div class="flip-card-back">
+                        [내공] 헤드폰을 쓰면 사방의 내면 심법이 상승! 신나는 리듬에 맞춰 묵직한 가락을 타며 멘탈을 금강불괴로 만든다! 🎵
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- OX 퀴즈 -->
+    <section>
+        <div class="section-title">
+            <span>⚔️</span> 수련생 관문: OX 퀴즈
+        </div>
+        <div class="quiz-box">
+            <div class="quiz-question">"지금 너무 집 가고 싶다..."</div>
+            <div class="quiz-btn-group">
+                <button class="quiz-btn btn-o" onclick="checkQuiz('O')">O</button>
+                <button class="quiz-btn btn-x" onclick="checkQuiz('X')">X</button>
+            </div>
+            <div id="quizResult" class="quiz-result"></div>
+        </div>
+    </section>
+
+    <!-- 오늘의 운세 -->
+    <section>
+        <div class="section-title">
+            <span>🔮</span> 도장 관장의 오늘의 괘쾌(운세)
+        </div>
+        <div class="fortune-box">
+            <div id="fortuneDisplay" class="fortune-display">
+                버튼을 눌러 오늘의 무예 운세를 점쳐보시오! 🎋
+            </div>
+            <button class="custom-btn" onclick="getFortune()">점괘 뽑기 🎲</button>
+        </div>
+    </section>
+
+    <!-- 미니게임 (10초 타격 수련) -->
+    <section>
+        <div class="section-title">
+            <span>👊</span> 10초 연속 타격 수련 (미니게임)
+        </div>
+        <div class="game-box">
+            <div class="game-stats">
+                <div class="stat-item">남은 수련시간: <span id="timer" class="stat-value">10</span>초</div>
+                <div class="stat-item">타격 수: <span id="clickCount" class="stat-value">0</span>회</div>
+            </div>
+            <div id="clickBtn" class="click-target" onclick="handleGameClick()">
+                💥
+            </div>
+            <div id="gameMsg" class="game-msg">샌드백(버튼)을 터치하여 단련을 시작하라!</div>
+            <br>
+            <button class="custom-btn" style="background: #27AE60; border-color: #1E8449;" onclick="resetGame()">재수련 하기 🔄</button>
+        </div>
+    </section>
+
+    <footer>
+        © 도토리묵밥 무술도장 | 무술과 묵밥의 결합 🥋
+    </footer>
+
+    <script>
+        /* 1. 카드 뒤집기 */
+        function toggleCard(card) {
+            card.classList.toggle('flipped');
+        }
+
+        /* 2. OX 퀴즈 */
+        function checkQuiz(answer) {
+            const resultDiv = document.getElementById('quizResult');
+            const quizBox = document.querySelector('.quiz-box');
+            
+            quizBox.classList.remove('shake', 'bounce');
+
+            if (answer === 'O') {
+                resultDiv.style.color = '#27AE60';
+                resultDiv.innerHTML = "🎉 [통과] 무술 수련자도 피할 수 없는 진리! 귀가 본능 합격!";
+                quizBox.classList.add('bounce');
+                
+                // 폭죽 효과 (Confetti)
+                confetti({
+                    particleCount: 60,
+                    spread: 70,
+                    origin: { y: 0.7 }
+                });
+            } else {
+                resultDiv.style.color = '#C62828';
+                resultDiv.innerHTML = "❌ [탈락] 거짓 수련이로다! 마음은 이미 이불 속이 아니더냐!";
+                quizBox.classList.add('shake');
+            }
+        }
+
+        /* 3. 무술 도장 컨셉 운세 (12개) */
+        const fortunes = [
+            "🥋 [대길] 오늘의 권법 기운이 매우 우수하여 모든 시련을 한 번에 격파합니다!",
+            "🍓 [달콤] 맛있는 딸기 디저트를 섭취하면 내공이 +100 상승합니다.",
+            "🥣 [묵밥] 시원한 도토리묵밥 한 그릇으로 마음의 평화를 얻게 됩니다.",
+            "🎧 [음공] 오늘 들려오는 음악이 당신에게 엄청난 번뜩임을 가져다줍니다.",
+            "⚡ [초기] 무심코 던진 일격이 엄청난 행운으로 되돌아오는 날입니다.",
+            "🛡️ [방어] 오늘 발생하는 모든 스트레스가 당신의 강인한 멘탈에 반사됩니다.",
+            "😴 [휴식] 최상의 무술은 바로 숙면! 오늘은 빠르게 누워서 기를 모으세요.",
+            "🎁 [뜻밖] 길을 걷다 작은 기쁨이나 보상을 획득하게 됩니다.",
+            "🏆 [승리] 어떤 대결이나 경쟁에서도 가볍게 승리할 수 있는 기운이 흐릅니다.",
+            "✨ [천재] 당신의 엉뚱한 아이디어가 도장 최고의 전설로 기록됩니다.",
+            "🍃 [바람] 시원한 바람처럼 걱정거리가 모두 날아가는 하루입니다.",
+            "🔥 [열정] 도전하는 일마다 불꽃 같은 에너지로 무사 통과합니다!"
+        ];
+
+        function getFortune() {
+            const display = document.getElementById('fortuneDisplay');
+            
+            display.style.opacity = 0;
+            
+            setTimeout(() => {
+                const randomIndex = Math.floor(Math.random() * fortunes.length);
+                display.innerText = fortunes[randomIndex];
+                display.style.opacity = 1;
+            }, 150);
+        }
+
+        /* 4. 10초 연속 타격 미니게임 */
+        let score = 0;
+        let timeLeft = 10;
+        let gameTimer = null;
+        let isPlaying = false;
+        let gameEnded = false;
+
+        const timerDisplay = document.getElementById('timer');
+        const countDisplay = document.getElementById('clickCount');
+        const gameMsg = document.getElementById('gameMsg');
+        const clickBtn = document.getElementById('clickBtn');
+
+        function handleGameClick() {
+            if (gameEnded) return;
+
+            if (!isPlaying) {
+                startGame();
+            }
+
+            score++;
+            countDisplay.innerText = score;
+        }
+
+        function startGame() {
+            isPlaying = true;
+            gameMsg.innerText = "질풍노도의 속도로 연타하라!! 🥊";
+            
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(gameTimer);
+            isPlaying = false;
+            gameEnded = true;
+            clickBtn.classList.add('disabled');
+
+            let evaluation = "";
+            if (score >= 65) {
+                evaluation = "👑 [전설의 신의 손] 도토리파 제1대 관장으로 임명합니다!";
+            } else if (score >= 45) {
+                evaluation = "🥋 [수제자] 가공할 연타 속도! 수련원에 적수가 없습니다.";
+            } else if (score >= 25) {
+                evaluation = "🥣 [정식 문하생] 훌륭한 타격감입니다! 조금 더 당류를 섭취하세요!";
+            } else {
+                evaluation = "🐢 [평화주의자] 평화로운 영혼이시군요! 묵밥 한 그릇 들고 오세요.";
+            }
+
+            gameMsg.innerHTML = `수련 종료! 총 <b>${score}회</b> 타격!<br>${evaluation}`;
+            
+            if (score >= 35) {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.8 }
+                });
+            }
+        }
+
+        function resetGame() {
+            clearInterval(gameTimer);
+            isPlaying = false;
+            gameEnded = false;
+            score = 0;
+            timeLeft = 10;
+
+            timerDisplay.innerText = timeLeft;
+            countDisplay.innerText = score;
+            gameMsg.innerText = "샌드백(버튼)을 터치하여 단련을 시작하라!";
+            clickBtn.classList.remove('disabled');
+        }
+    </script>
+</body>
+</html>
